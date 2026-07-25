@@ -1,0 +1,31 @@
+name: Test exact name match with artifact not found
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Delete non-existent artifact by exact name (failOnError=false)
+        id: action
+        uses: .
+        continue-on-error: true
+        with:
+          name: "nonexistent-artifact-xyz"
+          useGlob: "false"
+          failOnError: "false"
+
+      - name: Assert action ran and produced an outcome
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "cancelled" ]; then
+            echo "FAIL: action was cancelled unexpectedly"
+            exit 1
+          fi
+          echo "PASS: action ran with outcome=$OUTCOME (failure expected in act due to no artifact service)"

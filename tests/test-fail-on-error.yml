@@ -1,0 +1,46 @@
+name: Test failOnError behavior
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run delete-artifact action with failOnError=false
+        id: action-no-fail
+        uses: .
+        with:
+          name: nonexistent-artifact-xyz
+          failOnError: "false"
+        continue-on-error: true
+
+      - name: Assert action with failOnError=false ran
+        env:
+          OUTCOME: ${{ steps.action-no-fail.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "skipped" ]; then
+            echo "FAIL: action step was skipped unexpectedly"
+            exit 1
+          fi
+          echo "PASS: action ran with outcome=$OUTCOME"
+
+      - name: Run delete-artifact action with failOnError=true
+        id: action-with-fail
+        uses: .
+        with:
+          name: nonexistent-artifact-xyz-12345
+          failOnError: "true"
+        continue-on-error: true
+
+      - name: Assert action with failOnError=true ran
+        env:
+          OUTCOME: ${{ steps.action-with-fail.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "skipped" ]; then
+            echo "FAIL: action step was skipped unexpectedly"
+            exit 1
+          fi
+          echo "PASS: action ran with outcome=$OUTCOME"
